@@ -5,6 +5,7 @@
 #ifndef DOWSER_OUTPUT_HPP
 #define DOWSER_OUTPUT_HPP
 
+#include <juce_core/juce_core.h>
 
 #include "analysis.hpp"
 
@@ -21,8 +22,9 @@ namespace dowser {
             format_t fmt;
         };
 
-        static void perform(std::unique_ptr<analysis::results> results) {
-            // TODO
+        static void perform(std::unique_ptr<analysis::results> results, juce::File outfile) {
+            juce::FileOutputStream fos(outfile);
+
         }
     };
 }
