@@ -44,6 +44,8 @@ namespace dowser {
 
     template<>
     float window::calc<window::shape_t::RECT>(int i, int n) {
+        (void)i;
+        (void)n;
         return 1.f;
     }
 

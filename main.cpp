@@ -4,30 +4,30 @@
 #include "analysis.hpp"
 #include "output.hpp"
 
-// FIXME: make these into args
+// FIXME: make these into args?
 static constexpr int fftOrder = 11;
 static constexpr int overlap = 2;
 
-static void process(const juce::ArgumentList &args) {
-    juce::File file = args.getExistingFileForOption("input");
-    auto data = dowser::process<fftOrder, overlap>::perform(file, 1, 10000);
-    auto results = dowser::analysis<fftOrder, overlap>::perform(std::move(data));
+static void process(const juce::File file) {
+    // FIXME: defeinitely make these into args
+    static const float minHz = 10.f;
+    static const float maxHz = 10000.f;
+
+    std::cout << "performing import / STFT..." << std::endl;
+    auto data = dowser::process<fftOrder, overlap>::perform(file);
+
+    std::cout << "performing spectral analysis..." << std::endl;
+    auto results = dowser::analysis<fftOrder, overlap>::perform(std::move(data), minHz, maxHz);
+
+    std::cout << "performing output..." << std::endl;
     dowser::output<fftOrder, overlap>::perform(std::move(results));
 }
 
 int main(int argc, char* argv[]) {
-
-    juce::ConsoleApplication app;
-
-    app.addHelpCommand ("--help|-h", "Usage:", true);
-    app.addVersionCommand ("--version|-v", "MyApp version 1.2.3");
-
-
-    app.addCommand ({ "--process",
-                      "--process filename",
-                      "process a soundfile",
-                      "performs spectral analysis on given soundfile",
-                      [] (const auto& args) { process (args); }});
-
-    return app.findAndRunCommand (argc, argv);
+    if (argc < 2) {
+        std::cerr << "input soundfile required" << std::endl;
+        return 1;
+    }
+    juce::File file = juce::File::getCurrentWorkingDirectory().getChildFile(argv[1]);
+    process(file);
 }
