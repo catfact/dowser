@@ -24,7 +24,7 @@ namespace dowser {
 
         struct data {
             double sampleRate;
-            std::vector<std::array<double, numRealBins>> specMagFrames;
+            std::vector<std::array<double, numRealBins>> specPowFrames;
         };
 
         template<int overlap>
@@ -44,7 +44,7 @@ namespace dowser {
             for (auto &x: buf) { x = 0.f; }
 
             // working buffer for squared bin magnitudes
-            std::array<double, numRealBins> binMag2;
+            std::array<double, numRealBins> binPow;
 
             int64 numSampleFrames = reader->lengthInSamples;
             int64 offset = 0;
@@ -64,7 +64,7 @@ namespace dowser {
                 float* src = buf.data();
                 reader->read(&src, 1, offset, fftSize);
 
-                for (int i = 0; i < fftSize; ++i)
+                for (unsigned int i = 0; i < fftSize; ++i)
                 {
                     buf[i] *= win[i];
                 }
@@ -72,12 +72,12 @@ namespace dowser {
                 fft.performRealOnlyForwardTransform(buf.data(), true);
                 // result is placed in the IO buffer with real/imag interleaved
                 const float *x = &(buf[0]);
-                for (int i=0; i<numRealBins; ++i) {
+                for (unsigned int i=0; i<numRealBins; ++i) {
                     float re = *x++;
                     float im = *x++;
-                    binMag2[i] = re*re + (im*im);
+                    binPow[i] = re * re + (im * im);
                 }
-                data->specMagFrames.push_back(binMag2);
+                data->specPowFrames.push_back(binPow);
                 offset += hopSize;
             }
             delete reader;

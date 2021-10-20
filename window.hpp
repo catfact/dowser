@@ -29,17 +29,11 @@ namespace dowser {
         static constexpr int numShapes = 6;
 
         template<shape_t shape, int n>
-        static std::array<float, n> data() {
-            std::array<float, n> y;
-            for(int i=0; i<n; ++i) {
-                y[i] = calc<shape>(i, n);
-            }
-            return std::move(y);
-        };
+        static std::array<float, n> data();
 
         template<shape_t shape>
         static float calc(int i, int n);
-    };
+    }
 
     template<>
     [[maybe_unused]] float window::calc<window::shape_t::RECT>(int i, int n) {
@@ -81,6 +75,16 @@ namespace dowser {
         double t = 2.0 * M_PI * (double) i / (double) (n - 1);
         double y = 0.5 - 0.5 * std::cos(t);
         return static_cast<float>(std::sqrt(y));
+    }
+
+
+    template<window::shape_t shape, int n>
+    std::array<float, n> window::data() {
+        std::array<float, n> y;
+        for(unsigned int i=0; i<n; ++i) {
+            y[i] = calc<shape>(static_cast<int>(i), n);
+        }
+        return std::move(y);
     }
 }
 

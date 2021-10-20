@@ -44,14 +44,14 @@ namespace dowser {
             int maxBin = std::min(numRealBins - 2, static_cast<int>(maxHz * fftSize / sr));
             unsigned int maxPeaks = 16;
             double minMag = 0.0001;
-            for (auto &frame: data->specMagFrames) {
+            for (auto &frame: data->specPowFrames) {
                 typename results::frame resFrame;
                 resFrame.peaks = findPeaks<fftSize>(frame.data(), sr, maxPeaks, minMag, minBin, maxBin);
                 computeStats<fftSize>(resFrame, frame.data(), sr, minBin, maxBin);
                 res->frames.push_back(resFrame);
             }
 
-            return std::move(res);
+            return res;
         }
 
 
@@ -59,20 +59,18 @@ namespace dowser {
         // return vector of peaks for the current magnitudes
 
         template<int fftSize>
-        static std::vector<peak_t> findPeaks(const double *mag2Buf, double sr,
-                                             unsigned int maxPeaks, double minMag,
+        static std::vector<peak_t> findPeaks(const double *powBuf, double sr,
+                                             unsigned int maxPeaks, double minPow,
                                              int minBin, int maxBin) {
             std::vector<peak_t> y; // results vector
 
-            // compute bin magnitudes
-            static const float normScale = 1.f / static_cast<float>(fftSize);
 
             // find peak indices
             std::vector<int> idx;
             for (int bin = minBin; bin <= maxBin; ++bin) {
-                if (mag2Buf[bin] > minMag) {
+                if (powBuf[bin] > minPow) {
                     // assumption: bin-1 and bin+1 are in range
-                    if (mag2Buf[bin] > mag2Buf[bin - 1] && mag2Buf[bin] > mag2Buf[bin + 1]) {
+                    if (powBuf[bin] > powBuf[bin - 1] && powBuf[bin] > powBuf[bin + 1]) {
                         idx.push_back(bin);
                     }
                 }
@@ -80,10 +78,11 @@ namespace dowser {
             // interpolate true locations / magnitudes
             y.reserve(idx.size());
             for (auto &pos: idx) {
-                y.push_back(refinePeak<fftSize>(mag2Buf, pos, sr));
+                auto peak = refinePeak<fftSize>(powBuf, pos, sr);
+                y.push_back(peak);
                 // .. could compute peak "width" here but not sure it's useful
             }
-            // sort by peak magnitude
+            // sort by peak power
             std::sort(y.begin(), y.end(), [](peak_t a, peak_t b) { return a.second > b.second; });
             // retain only highest N peaks
             if (y.size() > maxPeaks) {
@@ -112,7 +111,7 @@ namespace dowser {
         template<int fftSize>
         static void computeStats(typename results::frame &dst, const double *powBuf, double sr,
                                  int minBin, int maxBin) {
-            static const double normScale = 1.f / static_cast<double>(fftSize);
+            static const double normScale = pow(1.0 / static_cast<double>(fftSize), 2);
             double meanLogMag = 0;
             double meanMag = 0;
             double meanPow = 0;
@@ -120,7 +119,7 @@ namespace dowser {
             double meanHzW = 0; // weighted hz for centroid
             int n = 0;
             for (int bin = minBin; bin < maxBin; ++bin) {
-                double pow = powBuf[bin];
+                double pow = powBuf[bin] * normScale;
                 double mag = sqrt(pow);
                 double hz = static_cast<double>(bin) / static_cast<double>(fftSize) * sr;
                 meanLogMag += std::log(mag);
