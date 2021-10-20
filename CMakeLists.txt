@@ -12,7 +12,9 @@ juce_add_console_app(dowser
 
 target_sources(dowser
     PRIVATE
-        main.cpp)
+        src/main.cpp)
+
+target_include_directories(dowser PRIVATE src)
 
 target_link_libraries(dowser
     PRIVATE

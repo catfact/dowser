@@ -94,11 +94,11 @@ namespace dowser {
         // approximate true peak location by quadratic fit
         // assumption: pos-1, pos+1 are in range
         template<int fftSize>
-        static peak_t refinePeak(const double *mag2Buf, int pos, double sr) {
+        static peak_t refinePeak(const double *powBuf, int pos, double sr) {
             peak_t y;
-            auto a = mag2Buf[pos - 1];
-            auto b = mag2Buf[pos];
-            auto c = mag2Buf[pos + 1];
+            auto a = powBuf[pos - 1];
+            auto b = powBuf[pos];
+            auto c = powBuf[pos + 1];
             auto p = (a - c) / (a - 2 * b + c) * 0.5;
             auto h = b - 0.5 * (a - c) * p;
             y.first = static_cast<float>((pos + p) / fftSize * sr);
@@ -129,10 +129,13 @@ namespace dowser {
                 maxPow = pow > maxPow ? pow : maxPow;
                 n++;
             }
-            meanPow /= static_cast<double>(n);
+            double nscale = 1.0 / static_cast<double>(n);
+            meanPow *= nscale;
             dst.papr = static_cast<float>(maxPow / meanPow);
             dst.centroid = static_cast<float>(meanHzW / meanMag);
-            dst.flatness = static_cast<float>(meanLogMag / meanMag);
+            meanLogMag *= nscale;
+            meanMag *= nscale;
+            dst.flatness = static_cast<float>(exp(meanLogMag) / meanMag);
             dst.meanPower = static_cast<float>(meanPow);
         }
     };
