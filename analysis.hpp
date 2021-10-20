@@ -10,8 +10,10 @@
 #include "process.hpp"
 
 namespace dowser {
-    namespace analysis {
 
+    template<int fftOrder, int overlap>
+    class analysis {
+    public:
         struct results {
 
             struct frame {
@@ -25,7 +27,7 @@ namespace dowser {
             std::vector<struct frame> frames;
         };
 
-        std::unique_ptr<struct results> perform(std::unique_ptr<process::data> data) {
+        static std::unique_ptr<struct results> perform(std::unique_ptr<typename process<fftOrder, overlap>::data> data) {
             auto res = std::make_unique<struct results>();
             // TODO
             return std::move(res);

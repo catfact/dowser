@@ -17,6 +17,7 @@ target_sources(dowser
 target_link_libraries(dowser
     PRIVATE
         juce::juce_core
+        juce::juce_dsp
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)

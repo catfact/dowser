@@ -9,8 +9,10 @@
 #include "analysis.hpp"
 
 namespace dowser {
-    namespace output {
+    template<int fftOrder, int overlap>
+    class output {
 
+    public:
         enum class format_t:int {
             csv, python, supercollider, lua
         };
@@ -20,7 +22,7 @@ namespace dowser {
             format_t fmt;
         };
 
-        void perform(std::unique_ptr<analysis::results> results) {
+        static void perform(std::unique_ptr<typename analysis<fftOrder, overlap>::results> results) {
             // TODO
         }
     };
