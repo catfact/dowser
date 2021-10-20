@@ -15,12 +15,11 @@
 
 namespace dowser {
 
-    template<int fftOrder, int overlap>
+    template<int fftOrder>
     class process {
 
     public:
         static constexpr int fftSize = 1 << fftOrder;
-        static constexpr int hopSize = fftSize / overlap;
         static constexpr int numRealBins = fftSize / 2 + 1;
 
         struct data {
@@ -28,7 +27,9 @@ namespace dowser {
             std::vector<std::array<double, numRealBins>> specMagFrames;
         };
 
+        template<int overlap>
         static std::unique_ptr<struct data> perform(const juce::File& soundfile) {
+            static constexpr int hopSize = fftSize / overlap;
             using juce::int64;
             juce::AudioFormatManager formatManager;
             formatManager.registerBasicFormats();
@@ -47,7 +48,7 @@ namespace dowser {
 
             int64 numSampleFrames = reader->lengthInSamples;
             int64 offset = 0;
-            int64 maxOffset = findMaxFftFrameOffset(numSampleFrames);
+            int64 maxOffset = findMaxFftFrameOffset<hopSize>(numSampleFrames);
 
             //-- perform STFT
             auto data = std::make_unique<struct data>();
@@ -84,7 +85,7 @@ namespace dowser {
         }
 
     private:
-
+        template<int hopSize>
         static juce::int64 findMaxFftFrameOffset(juce::int64 numSampleFrames)
         {
             juce::int64 used = 0;

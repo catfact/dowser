@@ -9,7 +9,6 @@
 #include "analysis.hpp"
 
 namespace dowser {
-    template<int fftOrder, int overlap>
     class output {
 
     public:
@@ -22,7 +21,7 @@ namespace dowser {
             format_t fmt;
         };
 
-        static void perform(std::unique_ptr<typename analysis<fftOrder, overlap>::results> results) {
+        static void perform(std::unique_ptr<analysis::results> results) {
             // TODO
         }
     };

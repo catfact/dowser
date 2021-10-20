@@ -14,13 +14,13 @@ static void process(const juce::File file) {
     static const float maxHz = 10000.f;
 
     std::cout << "performing import / STFT..." << std::endl;
-    auto data = dowser::process<fftOrder, overlap>::perform(file);
+    auto data = dowser::process<fftOrder>::perform<overlap>(file);
 
     std::cout << "performing spectral analysis..." << std::endl;
-    auto results = dowser::analysis<fftOrder, overlap>::perform(std::move(data), minHz, maxHz);
+    auto results = dowser::analysis::perform<fftOrder>(std::move(data), minHz, maxHz);
 
     std::cout << "performing output..." << std::endl;
-    dowser::output<fftOrder, overlap>::perform(std::move(results));
+    dowser::output::perform(std::move(results));
 }
 
 int main(int argc, char* argv[]) {

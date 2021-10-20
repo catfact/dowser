@@ -11,13 +11,9 @@
 
 namespace dowser {
 
-    template<int fftOrder, int overlap>
     class analysis {
 
     public:
-
-        static constexpr int fftSize = 1 << fftOrder;
-        static constexpr int numRealBins = fftSize / 2 + 1;
 
         typedef std::pair<float, float> peak_t;
         struct results {
@@ -33,9 +29,14 @@ namespace dowser {
             std::vector<struct frame> frames;
         };
 
+
+        template<int fftOrder>
         static std::unique_ptr<struct results>
-        perform(std::unique_ptr<typename process<fftOrder, overlap>::data> data,
+        perform(std::unique_ptr<typename process<fftOrder>::data> data,
                 float minHz, float maxHz) {
+            static constexpr int fftSize = 1 << fftOrder;
+            static constexpr int numRealBins = fftSize / 2 + 1;
+
             auto res = std::make_unique<struct results>();
 
             auto sr = data->sampleRate;
@@ -45,8 +46,8 @@ namespace dowser {
             double minMag = 0.0001;
             for (auto &frame: data->specMagFrames) {
                 typename results::frame resFrame;
-                resFrame.peaks = findPeaks(frame.data(), sr, maxPeaks, minMag, minBin, maxBin);
-                computeStats(resFrame, frame.data(), sr, minBin, maxBin);
+                resFrame.peaks = findPeaks<fftSize>(frame.data(), sr, maxPeaks, minMag, minBin, maxBin);
+                computeStats<fftSize>(resFrame, frame.data(), sr, minBin, maxBin);
                 res->frames.push_back(resFrame);
             }
 
@@ -56,9 +57,11 @@ namespace dowser {
 
     private:
         // return vector of peaks for the current magnitudes
+
+        template<int fftSize>
         static std::vector<peak_t> findPeaks(const double *mag2Buf, double sr,
-                                             unsigned int maxPeaks = 10, double minMag = 0.0,
-                                             int minBin = 0, int maxBin = numRealBins - 1) {
+                                             unsigned int maxPeaks, double minMag,
+                                             int minBin, int maxBin) {
             std::vector<peak_t> y; // results vector
 
             // compute bin magnitudes
@@ -77,7 +80,7 @@ namespace dowser {
             // interpolate true locations / magnitudes
             y.reserve(idx.size());
             for (auto &pos: idx) {
-                y.push_back(refinePeak(mag2Buf, pos, sr));
+                y.push_back(refinePeak<fftSize>(mag2Buf, pos, sr));
                 // .. could compute peak "width" here but not sure it's useful
             }
             // sort by peak magnitude
@@ -91,6 +94,7 @@ namespace dowser {
 
         // approximate true peak location by quadratic fit
         // assumption: pos-1, pos+1 are in range
+        template<int fftSize>
         static peak_t refinePeak(const double *mag2Buf, int pos, double sr) {
             peak_t y;
             auto a = mag2Buf[pos - 1];
@@ -105,8 +109,9 @@ namespace dowser {
 
 
         // compute spectral flatness of current frame, over given hz range
+        template<int fftSize>
         static void computeStats(typename results::frame &dst, const double *powBuf, double sr,
-                                 int minBin = 0, int maxBin = numRealBins - 1) {
+                                 int minBin, int maxBin) {
             static const double normScale = 1.f / static_cast<double>(fftSize);
             double meanLogMag = 0;
             double meanMag = 0;
