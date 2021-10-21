@@ -1,6 +1,6 @@
 ## dowser
 
-`dowser` is a quick and simple utility for performing spectral analysis of sound files.
+`dowser` is (presently) a quick and simple low-level utility for performing spectral analysis of sound files.
 
 ### usage
 
