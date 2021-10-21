@@ -8,14 +8,14 @@
 
 output file is a supercollider script, defining a list of dictionaries. 
 
-each dictionary contains data 
+each dictionary contains data for a single spectral analysis frame.
 
-frame data includes:
+per-frame measurements includes:
 
-`peaks`: list of events with `(hz, mag)` keys, listing spectral peaks for the given frame
-`papr`: peak-to-average-power ratio, a measure of "tonal-ness"
-`flatness`: AKA weiner entropy, geometric mean / arithmetic mean. another measure of "tonalness"
-`centroid`: spectral centroid, a measure of "brightness"
+- `peaks`: list of events with `(hz, mag)` keys, listing spectral peaks for the given frame
+- `papr`: peak-to-average-power ratio, a measure of "tonal-ness"
+- `flatness`: AKA weiner entropy, geometric mean / arithmetic mean. another measure of "tonalness"
+- `centroid`: spectral centroid, a measure of "brightness"
 
 ### requirements
 

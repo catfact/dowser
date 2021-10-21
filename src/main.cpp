@@ -4,13 +4,12 @@
 #include "analysis.hpp"
 #include "output.hpp"
 
-// FIXME: make these into args?
-static constexpr int fftOrder = 11;
+// FIXME: make these into args...
+static constexpr int fftOrder = 14;
 static constexpr int overlap = 2;
 
 static void process(const juce::File infile, const juce::File outfile) {
-    // FIXME: defeinitely make these into args
-
+    // FIXME: definitely make these into args
     static const float minHz = 10.f;
     static const float maxHz = 10000.f;
 
