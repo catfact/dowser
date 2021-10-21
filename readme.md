@@ -25,7 +25,7 @@ per-frame measurements includes:
 
 1. fetch dependencies (JUCE, which is lame but so it goes):
 
-`git submodule update --init --recursve`
+`git submodule update --init --recursive`
 
 2. create build folder:
 
@@ -49,3 +49,4 @@ the freshly compiled executable should then be located at:
 - expose more parameters (hz range, max peaks per frame, FFT config)
 - more analyses? (crest factor? autocorrelation peaks?)
 - drag/drop GUI option
+- maybe some higher-level analysis (e.g. clustering)
