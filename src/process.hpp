@@ -5,8 +5,8 @@
 #ifndef DOWSER_PROCESS_HPP
 #define DOWSER_PROCESS_HPP
 
-#include <complex>
 #include <memory>
+#include <numeric>
 
 #include <juce_core/juce_core.h>
 #include <juce_dsp/juce_dsp.h>
@@ -20,27 +20,35 @@ namespace dowser {
 
     public:
         static constexpr int fftSize = 1 << fftOrder;
-        static constexpr int numRealBins = fftSize / 2 + 1;
+        static constexpr int fftPadRatio = 2;
+        static constexpr int fftSizePadded = fftSize * fftPadRatio;
+        static constexpr int numRealBins = fftSizePadded / 2 + 1;
 
-        struct data {
+        struct specPowData {
             double sampleRate;
             std::vector<std::array<double, numRealBins>> specPowFrames;
         };
 
         template<int overlap>
-        static std::unique_ptr<struct data> perform(const juce::File& soundfile) {
+        static std::unique_ptr<struct specPowData> perform(const juce::File& soundfile) {
             static constexpr int hopSize = fftSize / overlap;
+            //static constexpr double fftNormScale = 1.0 / static_cast<double>(fftSize);
+            //static constexpr double fftNormScale = 1.0 / static_cast<double>(fftSizePadded);
+            /// wtf..
+            // static constexpr double fftNormScale = 1.0;
             using juce::int64;
+
             juce::AudioFormatManager formatManager;
             formatManager.registerBasicFormats();
             auto reader = formatManager.createReaderFor(soundfile.createInputStream());
 
             // analysis window
             std::array<float, fftSize> win = window::data<window::shape_t::HANN, fftSize>();
+            const double fftNormScale = fftPadRatio * 1.0 / std::accumulate(win.begin(), win.end(), 0.0);
 
             // working buffer for FFT
-            // (format is required by juce API)
-            std::array<float, fftSize*2> buf;
+            // (interleaved format is required by juce API)
+            std::array<float, fftSizePadded*2> buf;
             for (auto &x: buf) { x = 0.f; }
 
             // working buffer for squared bin magnitudes
@@ -50,11 +58,12 @@ namespace dowser {
             int64 offset = 0;
             int64 maxOffset = findMaxFftFrameOffset<hopSize>(numSampleFrames);
 
-            //-- perform STFT
-            auto data = std::make_unique<struct data>();
-            data->sampleRate = reader->sampleRate;
-
+            //------------------------------------
+            //-- perform the STFT
             juce::dsp::FFT fft(fftOrder);
+
+            auto results = std::make_unique<struct specPowData>();
+            results->sampleRate = reader->sampleRate * fftPadRatio;
 
             while (offset < maxOffset)
             {
@@ -64,24 +73,29 @@ namespace dowser {
                 float* src = buf.data();
                 reader->read(&src, 1, offset, fftSize);
 
-                for (unsigned int i = 0; i < fftSize; ++i)
-                {
+                unsigned int i=0;
+                while (i<fftSize) {
                     buf[i] *= win[i];
+                    i++;
+                }
+                while (i<buf.size()) {
+                    buf[i++] = 0.f;
                 }
 
                 fft.performRealOnlyForwardTransform(buf.data(), true);
                 // result is placed in the IO buffer with real/imag interleaved
                 const float *x = &(buf[0]);
-                for (unsigned int i=0; i<numRealBins; ++i) {
-                    float re = *x++;
-                    float im = *x++;
-                    binPow[i] = re * re + (im * im);
+                for (i=0; i<numRealBins; ++i) {
+                    double re = (*x++) * fftNormScale;
+                    double im = (*x++) * fftNormScale;
+                    double pow =(re * re) + (im * im);
+                    binPow[i] = pow;
                 }
-                data->specPowFrames.push_back(binPow);
+                results->specPowFrames.push_back(binPow);
                 offset += hopSize;
             }
             delete reader;
-            return std::move(data);
+            return std::move(results);
         }
 
     private:

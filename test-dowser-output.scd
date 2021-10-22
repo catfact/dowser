@@ -5,15 +5,15 @@ post("reading data... ");
 postln("done.");
 
 AppClock.sched(0, {
-	~data.collect({arg frame; frame.papr}).histo.plot;
-	~data.collect({arg frame; frame.flatness}).histo.plot;
+	//~data.collect({arg frame; frame.papr}).histo.plot;
+	//~data.collect({arg frame; frame.flatness}).histo.plot;
 	~data.collect({arg frame; frame.peaks.collect({ arg peak; peak[\hz].cpsmidi})}).flatten.histo.plot;
 	nil
 });
 )
 
 
-Loudness
+	~data.collect({arg frame; frame.peaks.collect({ arg peak; peak[\hz].cpsmidi})}).flatten.plot;
 
 // play some tones
 (

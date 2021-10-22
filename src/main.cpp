@@ -21,6 +21,8 @@ static void process(const juce::File infile, const juce::File outfile) {
 
     std::cout << "performing output..." << std::endl;
     dowser::output::perform(std::move(results), outfile);
+
+    std::cout << "done." << std::endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -31,5 +33,6 @@ int main(int argc, char* argv[]) {
     juce::File infile = juce::File::getCurrentWorkingDirectory().getChildFile(argv[1]);
     juce::File outfile = argc > 2 ? juce::File::getCurrentWorkingDirectory().getChildFile(argv[1])
             : juce::File::getCurrentWorkingDirectory().getChildFile("dowser-output.scd");
+
     process(infile, outfile);
 }

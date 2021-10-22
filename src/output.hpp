@@ -34,10 +34,10 @@ namespace dowser {
             fos << "[\n";
             for (auto frame: results->frames) {
                 fos << "  ( \n";
-                fos << "    papr:" << frame.papr << ", centroid:" << frame.centroid
-                    << ", flatness:" << frame.flatness << ", meanPower:" << frame.meanPower << ",\n";
+                fos << "    papr:" << frame.papr << ", centroid:" << frame.centroid << ", flatness:" << frame.flatness
+                << ", meanMag:" << frame.meanMag << ", maxMag:" << frame.maxMag << ",\n";
                 fos << "    peaks: [\n";
-                for (auto peak: frame.peaks) {
+                for (auto peak: frame.magPeaks) {
                     fos << "      (hz:" << peak.first << ", mag:" << sqrt(peak.second) << "),\n";
                 }
                 fos << "    ]\n";
