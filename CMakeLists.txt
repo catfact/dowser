@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.15)
 
 project(dowser VERSION 0.1.0)
 
-
 set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(lib/JUCE)
@@ -23,3 +22,13 @@ target_link_libraries(dowser
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
+
+        
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+    set(cflags_dowser "-O0 -g")
+elseif(CMAKE_BUILD_TYPE MATCHES "Release")
+    set(cflags_dowser "-O3")
+endif()
+
+
+set(set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${cflags_dowser} -Wall -Werror"))
