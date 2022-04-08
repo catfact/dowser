@@ -23,12 +23,12 @@ target_link_libraries(dowser
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
 
-        
-if(CMAKE_BUILD_TYPE MATCHES "Debug")
-    set(cflags_dowser "-O0 -g")
-elseif(CMAKE_BUILD_TYPE MATCHES "Release")
-    set(cflags_dowser "-O3")
-endif()
 
+# never mind this; juce/cmake ends up doing the same by default
+# if(CMAKE_BUILD_TYPE MATCHES "Debug")
+#     set(cflags_dowser "-O0 -g")
+# elseif(CMAKE_BUILD_TYPE MATCHES "Release")
+#     set(cflags_dowser "-O3")
+# endif()
 
-set(set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${cflags_dowser} -Wall -Werror"))
+# set(set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${cflags_dowser} -Wall -Werror"))

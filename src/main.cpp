@@ -13,13 +13,13 @@ static void process(const juce::File infile, const juce::File outfile) {
     static const float minHz = 10.f;
     static const float maxHz = 10000.f;
 
-    std::cout << "performing import / STFT..." << std::endl;
+    std::cout << "performing import / STFT... (" <<infile.getFullPathName() << ")" << std::endl;
     auto data = dowser::process<fftOrder>::perform<overlap>(infile);
 
     std::cout << "performing spectral analysis..." << std::endl;
     auto results = dowser::analysis::perform<fftOrder>(std::move(data), minHz, maxHz);
 
-    std::cout << "performing output..." << std::endl;
+    std::cout << "performing output... (" << outfile.getFullPathName() << ")" << std::endl;
     dowser::output::perform(std::move(results), outfile);
 
     std::cout << "done." << std::endl;
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     juce::File infile = juce::File::getCurrentWorkingDirectory().getChildFile(argv[1]);
-    juce::File outfile = argc > 2 ? juce::File::getCurrentWorkingDirectory().getChildFile(argv[1])
+    juce::File outfile = argc > 2 ? juce::File::getCurrentWorkingDirectory().getChildFile(argv[2])
             : juce::File::getCurrentWorkingDirectory().getChildFile("dowser-output.scd");
 
     process(infile, outfile);
