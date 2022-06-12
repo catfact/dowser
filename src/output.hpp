@@ -34,12 +34,20 @@ namespace dowser {
             fos << "[\n";
             for (auto frame: results->frames) {
                 fos << "  ( \n";
-                fos << "    papr:" << frame.papr << ", centroid:" << frame.centroid << ", flatness:" << frame.flatness
-                << ", meanMag:" << frame.meanMag << ", maxMag:" << frame.maxMag << ",\n";
-                fos << "    peaks: [\n";
+                fos << "    papr:" << frame.papr << ", centroid:" << frame.centroid << ", flatness:" << frame.flatness;
+                fos << ", fluxPositive:" << frame.fluxPositive  << ", fluxNegative:" << frame.fluxNegative;
+                fos << ", meanMag:" << frame.meanMag << ", maxMag:" << frame.maxMag << ",\n";
+                fos << "    magPeaks: [\n";
                 for (auto peak: frame.magPeaks) {
                     fos << "      (hz:" << peak.first << ", mag:" << sqrt(peak.second) << "),\n";
                 }
+
+#if INCLUDE_AUTOCORR
+                fos << "    acPeaks: [\n";
+                for (auto peak: frame.acPeaks) {
+                    fos << "      (hz:" << peak.first << ", ac:" << sqrt(peak.second) << "),\n";
+                }
+#endif
                 fos << "    ]\n";
                 fos << "  ),\n";
             }

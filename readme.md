@@ -4,18 +4,25 @@
 
 ### usage
 
-`dowser <infile> <outfile>`
+`dowser [in] [out] <options>`
 
-output file is a supercollider script, defining a list of dictionaries. 
+options include:
 
-each dictionary contains data for a single spectral analysis frame.
+`--minhz`, lower frequency bound of analysis, in hz
+`--maxhz`, upper frequency bound of analysis, in hz
+`--minmag`, peak magnitude threshold
+`--maxpeaks`, max number of peaks per frame
 
-per-frame measurements includes:
+the output is a supercollider script, defining a list of dictionaries. each dictionary contains data for a single spectral analysis frame.
+
+per-frame measurements include:
 
 - `peaks`: list of events with `(hz, mag)` keys, listing spectral peaks for the given frame
 - `papr`: peak-to-average-power ratio, a measure of "tonal-ness"
 - `flatness`: AKA weiner entropy, geometric mean / arithmetic mean. another measure of "tonalness"
 - `centroid`: spectral centroid, a measure of "brightness"
+- `fluxPositive`: spectral flux, in a positive direction
+- `fluxNegative`: spectral flux, in a negative direction
 
 ### requirements
 

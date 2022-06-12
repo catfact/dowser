@@ -49,7 +49,8 @@ namespace dowser {
                 isPeak[maxIdx] = true;
                 count++;
 
-                // 2. zero out the region around the peak, "rolling down the slopes"
+                // 2. zero out lower values in the region around the peak,
+                // ("rolling down the slopes")
                 double peakVal = tmp[maxIdx];
                 tmp[maxIdx] = floorValue;
                 // roll one way
@@ -91,7 +92,7 @@ namespace dowser {
 //                std::cout << idx << std::endl;
 //            }
 //            std::cout << std::endl;
-
+3
             return peakIdx;
         } // find_peaks
     } // peaks

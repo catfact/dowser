@@ -24,18 +24,15 @@ namespace dowser {
         static constexpr int fftSizePadded = fftSize * fftPadRatio;
         static constexpr int numRealBins = fftSizePadded / 2 + 1;
 
-        struct specPowData {
+        struct analysisData {
             double sampleRate;
             std::vector<std::array<double, numRealBins>> specPowFrames;
+            std::vector<std::array<double, numRealBins>> autoCorrFrames;
         };
 
         template<int overlap>
-        static std::unique_ptr<struct specPowData> perform(const juce::File& soundfile) {
+        static std::unique_ptr<struct analysisData> perform(const juce::File& soundfile) {
             static constexpr int hopSize = fftSize / overlap;
-            //static constexpr double fftNormScale = 1.0 / static_cast<double>(fftSize);
-            //static constexpr double fftNormScale = 1.0 / static_cast<double>(fftSizePadded);
-            /// wtf..
-            // static constexpr double fftNormScale = 1.0;
             using juce::int64;
 
             juce::AudioFormatManager formatManager;
@@ -51,9 +48,11 @@ namespace dowser {
             std::array<float, fftSizePadded*2> buf;
             for (auto &x: buf) { x = 0.f; }
 
-            // working buffer for squared bin magnitudes
+            // output buffer for squared bin magnitudes
             std::array<double, numRealBins> binPow;
-
+            // output buffer for autocorrelation
+            std::array<double, numRealBins> binAc;
+            
             int64 numSampleFrames = reader->lengthInSamples;
             int64 offset = 0;
             int64 maxOffset = findMaxFftFrameOffset<hopSize>(numSampleFrames);
@@ -61,8 +60,9 @@ namespace dowser {
             //------------------------------------
             //-- perform the STFT
             juce::dsp::FFT fft(fftOrder);
+            
 
-            auto results = std::make_unique<struct specPowData>();
+            auto results = std::make_unique<struct analysisData>();
             results->sampleRate = reader->sampleRate * fftPadRatio;
 
             while (offset < maxOffset)
@@ -84,13 +84,36 @@ namespace dowser {
 
                 fft.performRealOnlyForwardTransform(buf.data(), true);
                 // result is placed in the IO buffer with real/imag interleaved
-                const float *x = &(buf[0]);
+                float *pRe = &(buf[0]);
+                float *pIm = &(buf[1]);
+
                 for (i=0; i<numRealBins; ++i) {
-                    double re = (*x++) * fftNormScale;
-                    double im = (*x++) * fftNormScale;
+                    double re = *pRe * fftNormScale;
+                    double im = *pIm * fftNormScale;
                     double pow =(re * re) + (im * im);
                     binPow[i] = pow;
+#if INCLUDE_AUTOCORR
+                    // FIXME: echh.. don't want windowing on the signal for AC.
+                    // also need different circularity correction, etc;
+                    /// anyway it needs work, so disabling it for now.
+
+                    // store calculated power for autocorrelation
+                    *pRe = static_cast<float>(pow);
+                    *pIm = 0.f;
+#endif
+                    pRe += 2;
+                    pIm += 2;
                 }
+
+#if INCLUDE_AUTOCORR
+                // perform autocorrelation
+                fft.performRealOnlyInverseTransform(buf.data());
+                // (i believe the AC data is now non-interleaved in the I/O buf?)
+                for (i=0; i<numRealBins; ++i) {
+                    binAc[(size_t)i] = buf.data()[i];
+                }
+                results->autoCorrFrames.push_back(binAc);
+#endif
                 results->specPowFrames.push_back(binPow);
                 offset += hopSize;
             }

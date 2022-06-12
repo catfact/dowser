@@ -1,5 +1,7 @@
 #include <juce_core/juce_core.h>
 
+#include "argh.h"
+
 #include "process.hpp"
 #include "analysis.hpp"
 #include "output.hpp"
@@ -26,6 +28,9 @@ static void process(const juce::File infile, const juce::File outfile) {
 }
 
 int main(int argc, char* argv[]) {
+
+    argh::parser cmdl(argv);
+    
     if (argc < 2) {
         std::cerr << "infile soundfile required" << std::endl;
         return 1;

@@ -14,7 +14,7 @@ target_sources(dowser
     PRIVATE
         src/main.cpp)
 
-target_include_directories(dowser PRIVATE src)
+target_include_directories(dowser PRIVATE src lib)
 
 target_link_libraries(dowser
     PRIVATE
@@ -23,3 +23,6 @@ target_link_libraries(dowser
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
+
+add_executable(test-watershed src/test_watershed.cpp)
+target_include_directories(test-watershed PRIVATE src)
