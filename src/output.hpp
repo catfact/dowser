@@ -12,6 +12,13 @@
 namespace dowser {
     class output {
 
+    private:
+        /// helper
+        static void log_field(juce::FileOutputStream &fos, const char *name, float val) {
+            if (!std::isnan(val)) {
+                fos <<  name << ":" << val << ", ";
+            } 
+        }
     public:
         enum class format_t : int {
             csv, python, supercollider, lua
@@ -21,7 +28,7 @@ namespace dowser {
             juce::File file;
             format_t fmt;
         };
-
+ 
         static void perform(std::unique_ptr<analysis::results> results, const juce::File& outfile) {
             outfile.deleteFile();
             juce::FileOutputStream fos(outfile);
@@ -33,11 +40,14 @@ namespace dowser {
 
             fos << "[\n";
             for (auto frame: results->frames) {
-                fos << "  ( \n";
-                fos << "    papr:" << frame.papr << ", centroid:" << frame.centroid << ", flatness:" << frame.flatness;
-                fos << ", fluxPositive:" << frame.fluxPositive  << ", fluxNegative:" << frame.fluxNegative;
-                fos << ", meanMag:" << frame.meanMag << ", maxMag:" << frame.maxMag << ",\n";
-                fos << "    magPeaks: [\n";
+                fos << "  ( \n    ";
+                log_field(fos, "papr", frame.papr);
+                log_field(fos, "centroid", frame.centroid);
+                log_field(fos, "flatness", frame.flatness);
+                log_field(fos, "meanMag", frame.meanMag);
+                log_field(fos, "maxMag", frame.maxMag);
+                fos << "\n    ";
+                fos << "peaks: [\n";
                 for (auto peak: frame.magPeaks) {
                     fos << "      (hz:" << peak.first << ", mag:" << sqrt(peak.second) << "),\n";
                 }
