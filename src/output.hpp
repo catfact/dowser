@@ -46,10 +46,12 @@ namespace dowser {
                 log_field(fos, "flatness", frame.flatness);
                 log_field(fos, "meanMag", frame.meanMag);
                 log_field(fos, "maxMag", frame.maxMag);
+                log_field(fos, "fluxPositive", frame.fluxPositive);
+                log_field(fos, "fluxNegative", frame.fluxNegative);
                 fos << "\n    ";
                 fos << "peaks: [\n";
                 for (auto peak: frame.magPeaks) {
-                    fos << "      (hz:" << peak.first << ", mag:" << sqrt(peak.second) << "),\n";
+                    fos << "      (hz:" << peak.hz << ", mag:" << sqrt(peak.pow) << "),\n";
                 }
 
 #if INCLUDE_AUTOCORR

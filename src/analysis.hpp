@@ -10,21 +10,25 @@
 #include "process.hpp"
 //#include "findpeaks/findpeaks.hpp"
 //#include "findpeaks/persistence.hpp"
+#include "peaks_watershed.hpp"
 
-namespace dowser
-{
+#include "process_config.hpp"
 
-    class analysis
-    {
+namespace dowser {
+
+    class analysis {
 
     public:
-        typedef std::pair<float, float> peak_t;
-        struct results
-        {
+        //typedef std::pair<float, float> peak_t;
+        struct MagPeak {
+            float hz;
+            float pow;
+            float persistence;
+        };
+        struct results {
 
-            struct frame
-            {
-                std::vector<peak_t> magPeaks;
+            struct frame {
+                std::vector<MagPeak> magPeaks;
 
 #if INCLUDE_AUTOCORR
                 std::vector<peak_t> acPeaks;
@@ -41,34 +45,36 @@ namespace dowser
             std::vector<struct frame> frames;
         };
 
-        template <int fftOrder>
+        template<int fftOrder>
         static std::unique_ptr<struct results>
         perform(std::unique_ptr<typename process<fftOrder>::analysisData> analysisData,
-                float minHz, float maxHz)
-        {
+                const dowser::ProcessConfig &config) {
             static constexpr int fftSize = process<fftOrder>::fftSizePadded;
             static constexpr int numRealBins = fftSize / 2 + 1;
 
             auto res = std::make_unique<struct results>();
 
             auto sr = analysisData->sampleRate;
-            int minBin = std::max(1, static_cast<int>(minHz * fftSize / sr));
-            int maxBin = std::min(numRealBins - 2, static_cast<int>(maxHz * fftSize / sr));
-            unsigned int maxPeaks = 48;
-            double minMag = 0.00001;
-            double minPow = minMag * minMag;
+            int minBin = std::max(1, static_cast<int>(config.minHz * fftSize / sr));
+            int maxBin = std::min(numRealBins - 2, static_cast<int>(config.maxHz * fftSize / sr));
 
-            for (size_t i = 0; i < analysisData->specPowFrames.size(); ++i)
-            {
+            //unsigned int maxPeaks = 48;
+//            double minMag = 0.00001;
+//            double minPow = minMag * minMag;
+
+            for (size_t i = 0; i < analysisData->specPowFrames.size(); ++i) {
                 const auto &powFrame = analysisData->specPowFrames[i];
 #if INCLUDE_AUTOCORR
                 const auto &acFrame = analysisData->autoCorrFrames[i];
 #endif
                 typename results::frame resFrame;
 
-                resFrame.magPeaks = getMagPeaksFromPowFrames<fftSize>(powFrame.data(), sr, maxPeaks, minPow,
-                                                                      static_cast<unsigned int>(minBin),
-                                                                      static_cast<unsigned int>(maxBin));
+                resFrame.magPeaks = getPowPeaks<fftSize>(powFrame.data(), sr,
+                                                         config.maxPeaksPerFrame,
+                                                         powf(10, config.minPowDb / 20),
+                                                         config.minPersistence,
+                                                         static_cast<unsigned int>(minBin),
+                                                         static_cast<unsigned int>(maxBin));
 
 #if INCLUDE_AUTOCORR
                 resFrame.acPeaks = getMagPeaksFromPowFrames<fftSize>(acFrame.data(), sr, maxPeaks, 0,
@@ -77,29 +83,22 @@ namespace dowser
 #endif
                 computeStats<fftSize>(resFrame, powFrame.data(), sr, minBin, maxBin);
 
-                if (i > 0)
-                {
+                if (i > 0) {
                     const auto &powFrame0 = analysisData->specPowFrames[i - 1];
                     double fluxUp = 0;
                     double fluxDown = 0;
-                    for (size_t bin = 0; bin < powFrame.size(); ++bin)
-                    {
+                    for (size_t bin = 0; bin < powFrame.size(); ++bin) {
                         double diff = sqrt(powFrame[bin]) - sqrt(powFrame0[bin]);
-                        if (diff > 0)
-                        {
+                        if (diff > 0) {
                             fluxUp += diff;
-                        }
-                        else
-                        {
+                        } else {
                             fluxDown += diff;
                         }
                     }
 
                     resFrame.fluxPositive = fluxUp;
                     resFrame.fluxNegative = fluxDown;
-                }
-                else
-                {
+                } else {
                     resFrame.fluxPositive = 0.f;
                     resFrame.fluxNegative = 0.f;
                 }
@@ -113,26 +112,22 @@ namespace dowser
     private:
         // return vector of peaks for the current magnitudes
 
-        template <int fftSize>
-        static std::vector<peak_t> getMagPeaksFromPowFrames(const double *powBuf, double sr,
-                                                            unsigned int maxPeaks, double minPow,
-                                                            unsigned int minBin, unsigned int maxBin)
-        {
-            std::vector<peak_t> y; // results vector
+        template<int fftSize>
+        static std::vector<MagPeak> getPowPeaks(const double *powBuf, double sr,
+                                                unsigned int maxPeaks,
+                                                double minPow, double minPersist,
+                                                unsigned int minBin, unsigned int maxBin) {
+            std::vector<MagPeak> y; // results vector
 
             // std::vector<unsigned int> idx = peaks::find_peaks<double, fftSize>(powBuf, minPow, maxPeaks,
             //                                                                    minBin, maxBin);
 
-            //--------------
-            //-- trying out the 'findpeaks' library
-
-//            std::vector<double> workBuffer;
-//            int bin = minBin;
-//            while (bin <= maxBin)
-//            {
-//                workBuffer.push_back(log10(powBuf[bin]) * 20);
-//                bin++;
-//            }
+            std::vector<double> workBuffer;
+            unsigned int bin = minBin;
+            while (bin <= maxBin) {
+                workBuffer.push_back(log10(powBuf[bin]) * 20);
+                bin++;
+            }
 //            findpeaks::image_t<double> peaksImage = {
 //                1, maxBin - minBin + 1, workBuffer.data()};
 //
@@ -145,24 +140,38 @@ namespace dowser
 //                          << "\t(" << p.death_position.x << ", " << p.death_position.y << ")\n";
 //            }
 
+            auto watershedPeaks = dowser::peaks::Watershed<double>::findPeaks(
+                    workBuffer.data(), static_cast<int>(maxBin - minBin + 1));
+
             std::vector<unsigned int> idx;
+            for (auto &p: watershedPeaks) {
+                unsigned int i = static_cast<unsigned int>(p.index) + minBin;
+                if (powBuf[i] > minPow && p.persistence > minPersist) {
+                    idx.push_back(i);
+                }
+            }
+            //
 
             // interpolate true locations / magnitudes
             y.reserve(idx.size());
-            for (auto &pos : idx)
-            {
+            for (auto &pos: idx) {
                 auto peak = refinePeak<fftSize>(powBuf, static_cast<int>(pos), sr);
-                if (peak.second > 0)
-                {
+                peak.persistence = watershedPeaks[pos - minBin].persistence;
+                if (peak.pow > 0) {
                     y.push_back(peak);
                 }
             }
             // sort by peak power
-            std::sort(y.begin(), y.end(), [](peak_t a, peak_t b)
-                      { return a.second > b.second; });
+//            std::sort(y.begin(), y.end(), [](peak_t a, peak_t b)
+//                      { return a.second > b.second; });
+
+            // sort by peak persistence
+            std::sort(y.begin(), y.end(), [](MagPeak a, MagPeak b) {
+                return a.persistence > b.persistence;
+            });
+
             // retain only highest N peaks
-            if (y.size() > maxPeaks)
-            {
+            if (y.size() > maxPeaks) {
                 y = {y.begin(), y.begin() + maxPeaks};
             }
             return y;
@@ -170,10 +179,9 @@ namespace dowser
 
         // approximate true peak location by quadratic fit
         // assumption: pos-1, pos+1 are in range
-        template <int fftSize>
-        static peak_t refinePeak(const double *powBuf, int pos, double sr)
-        {
-            peak_t y;
+        template<int fftSize>
+        static MagPeak refinePeak(const double *powBuf, int pos, double sr) {
+            MagPeak y;
             /// FIXME: might be better to interpolate in mag domain.
             /// but, we wouldn't want to calculate mag here (too many redundant sqrts)
             auto a = powBuf[pos - 1];
@@ -181,21 +189,19 @@ namespace dowser
             auto c = powBuf[pos + 1];
             auto p = (a - c) / (a - 2 * b + c) * 0.5;
             auto h = b - 0.5 * (a - c) * p;
-            if (h < 0)
-            {
+            if (h < 0) {
                 // std::cerr << "peak interpolation returned negative power (probably not a true peak)" << std::endl;
                 h = 0;
             }
-            y.first = static_cast<float>((pos + p) / fftSize * sr);
-            y.second = static_cast<float>(h);
+            y.hz = static_cast<float>((pos + p) / fftSize * sr);
+            y.pow = static_cast<float>(h);
             return y;
         }
 
         // compute spectral statistics of current frame, over given hz range
-        template <int fftSize>
+        template<int fftSize>
         static void computeStats(typename results::frame &dst, const double *powBuf, double sr,
-                                 int minBin, int maxBin)
-        {
+                                 int minBin, int maxBin) {
             // static const double normScale = pow(1.0 / static_cast<double>(fftSize), 2);
             double meanLogMag = 0;
             double meanMag = 0;
@@ -203,8 +209,7 @@ namespace dowser
             double maxMag = 0;
             double meanHzW = 0; // weighted hz for centroid
             int n = 0;
-            for (int bin = minBin; bin < maxBin; ++bin)
-            {
+            for (int bin = minBin; bin < maxBin; ++bin) {
                 double pow = powBuf[bin];
                 // double pow = powBuf[bin] * normScale;
                 double mag = sqrt(pow);

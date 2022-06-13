@@ -44,7 +44,7 @@ int main()
 //    }
 //    std::cout << std::endl << "];" << std::endl;
 
-    auto peaks = dowser::peaks::Watershed<double, N>::findPeaks(X.data());
+    auto peaks = dowser::peaks::Watershed<double>::findPeaks(X.data(), N);
 
     int n = peaks.size();
 

@@ -10,7 +10,7 @@ namespace dowser
     namespace peaks
     {
 
-        template <typename T, int N>
+        template <typename T>
         class Watershed
         {
         public:
@@ -49,7 +49,7 @@ namespace dowser
                 void setValue(T aValue) { value = aValue; }
             };
 
-            static std::vector<Peak> findPeaks(T *series)
+            static std::vector<Peak> findPeaks(T *series, unsigned int N)
             {
                 std::vector<int> indices;
                 indices.reserve(N);
