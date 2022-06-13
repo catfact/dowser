@@ -23,5 +23,5 @@ target_link_libraries(dowser
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
 
-add_executable(test-watershed src/test_watershed.cpp)
+add_executable(test-watershed src/test_watershed.cpp src/output.cpp)
 target_include_directories(test-watershed PRIVATE src)

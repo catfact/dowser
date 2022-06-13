@@ -58,10 +58,6 @@ namespace dowser {
             int minBin = std::max(1, static_cast<int>(config.minHz * fftSize / sr));
             int maxBin = std::min(numRealBins - 2, static_cast<int>(config.maxHz * fftSize / sr));
 
-            //unsigned int maxPeaks = 48;
-//            double minMag = 0.00001;
-//            double minPow = minMag * minMag;
-
             for (size_t i = 0; i < analysisData->specPowFrames.size(); ++i) {
                 const auto &powFrame = analysisData->specPowFrames[i];
 #if INCLUDE_AUTOCORR
@@ -110,8 +106,6 @@ namespace dowser {
         }
 
     private:
-        // return vector of peaks for the current magnitudes
-
         template<int fftSize>
         static std::vector<MagPeak> getPowPeaks(const double *powBuf, double sr,
                                                 unsigned int maxPeaks,
@@ -119,30 +113,16 @@ namespace dowser {
                                                 unsigned int minBin, unsigned int maxBin) {
             std::vector<MagPeak> y; // results vector
 
-            // std::vector<unsigned int> idx = peaks::find_peaks<double, fftSize>(powBuf, minPow, maxPeaks,
-            //                                                                    minBin, maxBin);
-
             std::vector<double> workBuffer;
             unsigned int bin = minBin;
             while (bin <= maxBin) {
                 workBuffer.push_back(log10(powBuf[bin]) * 20);
                 bin++;
             }
-//            findpeaks::image_t<double> peaksImage = {
-//                1, maxBin - minBin + 1, workBuffer.data()};
-//
-//            std::vector<findpeaks::peak_t<double>> peaks = findpeaks::persistence(peaksImage);
-//            std::cout << "found " << peaks.size() << " peaks..." << std::endl;
-//            for (const auto &p : peaks)
-//            {
-//                std::cout << "(" << p.birth_position.x << ", " << p.birth_position.y << ")\t"
-//                          << p.birth_level << "  " << p.persistence
-//                          << "\t(" << p.death_position.x << ", " << p.death_position.y << ")\n";
-//            }
-
             auto watershedPeaks = dowser::peaks::Watershed<double>::findPeaks(
-                    workBuffer.data(), static_cast<int>(maxBin - minBin + 1));
+                    workBuffer.data(), static_cast<unsigned int>(maxBin - minBin + 1));
 
+            // normalize persistence
             std::vector<unsigned int> idx;
             for (auto &p: watershedPeaks) {
                 unsigned int i = static_cast<unsigned int>(p.index) + minBin;
@@ -150,7 +130,6 @@ namespace dowser {
                     idx.push_back(i);
                 }
             }
-            //
 
             // interpolate true locations / magnitudes
             y.reserve(idx.size());
@@ -161,16 +140,19 @@ namespace dowser {
                     y.push_back(peak);
                 }
             }
-            // sort by peak power
-//            std::sort(y.begin(), y.end(), [](peak_t a, peak_t b)
-//                      { return a.second > b.second; });
 
-            // sort by peak persistence
             std::sort(y.begin(), y.end(), [](MagPeak a, MagPeak b) {
                 return a.persistence > b.persistence;
             });
 
-            // retain only highest N peaks
+            // normalize persistence
+            float maxPersistence = y[1].persistence;
+            for (auto &p: y) {
+                if (p.persistence <= maxPersistence) {
+                    p.persistence /= maxPersistence;
+                }
+            }
+
             if (y.size() > maxPeaks) {
                 y = {y.begin(), y.begin() + maxPeaks};
             }
@@ -182,8 +164,6 @@ namespace dowser {
         template<int fftSize>
         static MagPeak refinePeak(const double *powBuf, int pos, double sr) {
             MagPeak y;
-            /// FIXME: might be better to interpolate in mag domain.
-            /// but, we wouldn't want to calculate mag here (too many redundant sqrts)
             auto a = powBuf[pos - 1];
             auto b = powBuf[pos];
             auto c = powBuf[pos + 1];

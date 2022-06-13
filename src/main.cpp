@@ -20,7 +20,8 @@ static void process(const juce::File infile, const juce::File outfile, const dow
     auto results = dowser::analysis::perform<fftOrder>(std::move(data), config);
 
     std::cout << "performing output... (" << outfile.getFullPathName() << ")" << std::endl;
-    dowser::output::perform(std::move(results), outfile);
+    dowser::output<dowser::output_format_t::supercollider> out;
+    out.perform(std::move(results).get(), outfile);
 
     std::cout << "done." << std::endl;
 }
@@ -28,14 +29,12 @@ static void process(const juce::File infile, const juce::File outfile, const dow
 int main(int argc, char* argv[]) {
 
     argh::parser cmdl(argv);
-//    float minPowDb, minHz, maxHz, minPersistence;
-//    int maxPeaksPerFrame;
     dowser::ProcessConfig config;
-    cmdl("--min_pow_db", -100.f) >> config.minPowDb;
-    cmdl("--min_hz", 1.f) >> config.minHz;
-    cmdl("--max_hz", 10000.f) >> config.maxHz;
-    cmdl("--max_peaks", 48) >> config.maxHz;
-    cmdl("--min_ersistence", 0.1) >> config.maxHz;
+    cmdl("--min_pow_db", -200.f) >> config.minPowDb;
+    cmdl("--min_hz", 30.f) >> config.minHz;
+    cmdl("--max_hz", 6000.f) >> config.maxHz;
+    cmdl("--max_peaks", 48) >> config.maxPeaksPerFrame;
+    cmdl("--min_persistence", 0.5) >> config.minPersistence;
 
     if (argc < 2) {
         std::cerr << "infile soundfile required" << std::endl;
