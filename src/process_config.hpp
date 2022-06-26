@@ -1,10 +1,13 @@
 #pragma once
 
+#include "output.hpp"
+
 namespace dowser
 {
     struct ProcessConfig
     {
-        float minPowDb, minHz, maxHz, minPersistence;
+        dowser::output_format_t outputFormat;
+        float minHz, maxHz, minPowDb, minPersistence;
         int maxPeaksPerFrame;
     };
 }

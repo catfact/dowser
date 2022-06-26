@@ -21,6 +21,7 @@ static void process(const juce::File infile, const juce::File outfile, const dow
 
     std::cout << "performing output... (" << outfile.getFullPathName() << ")" << std::endl;
     dowser::output<dowser::output_format_t::supercollider> out;
+
     out.perform(std::move(results).get(), outfile);
 
     std::cout << "done." << std::endl;
