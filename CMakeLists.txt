@@ -11,6 +11,13 @@ juce_add_console_app(dowser
 
 target_sources(dowser
     PRIVATE
+        src/analysis.hpp
+        src/peaks.hpp
+        src/peaks_watershed.hpp
+        src/process.hpp
+        src/process_config.hpp
+        src/output.hpp
+        src/output_format.hpp
         src/main.cpp)
 
 target_include_directories(dowser PRIVATE src lib)
@@ -23,5 +30,5 @@ target_link_libraries(dowser
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
 
-add_executable(test-watershed src/test_watershed.cpp src/output.cpp)
-target_include_directories(test-watershed PRIVATE src)
+#add_executable(test-watershed src/test_watershed.cpp src/output.cpp)
+#target_include_directories(test-watershed PRIVATE src)

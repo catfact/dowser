@@ -35,7 +35,7 @@ namespace dowser
                 {
                     if (died >= 0)
                     {
-                        return series[born] - series[died];
+                        return (float)(series[born] - series[died]);
                     }
                     else
                     {
@@ -53,7 +53,7 @@ namespace dowser
             {
                 std::vector<int> indices;
                 indices.reserve(N);
-                for (int i = 0; i < N; ++i)
+                for (unsigned int i = 0; i < N; ++i)
                 {
                     indices.push_back(i);
                 }
@@ -66,9 +66,9 @@ namespace dowser
 
                 std::vector<Peak> peaks;
 
-                for (int i = 0; i < N; ++i)
+                for (unsigned int i = 0; i < N; ++i)
                 {
-                    int idx = indices[i];
+                    unsigned int idx = indices[i];
                     bool done_l = idx > 0 && indexToPeak[idx - 1] >= 0;
                     bool done_r = idx < (N - 1) && indexToPeak[idx + 1] >= 0;
                     int idx_l = done_l ? indexToPeak[idx - 1] : -1;

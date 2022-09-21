@@ -50,9 +50,11 @@ namespace dowser {
 
             // output buffer for squared bin magnitudes
             std::array<double, numRealBins> binPow;
+#if INCLUDE_AUTOCORR
             // output buffer for autocorrelation
             std::array<double, numRealBins> binAc;
-            
+#endif
+
             int64 numSampleFrames = reader->lengthInSamples;
             int64 offset = 0;
             int64 maxOffset = findMaxFftFrameOffset<hopSize>(numSampleFrames);

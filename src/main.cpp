@@ -11,6 +11,7 @@
 static constexpr int fftOrder = 14;
 static constexpr int overlap = 2;
 
+
 static void process(const juce::File infile, const juce::File outfile, const dowser::ProcessConfig &config) {
 
     std::cout << "performing import / STFT... (" <<infile.getFullPathName() << ")" << std::endl;
@@ -20,9 +21,9 @@ static void process(const juce::File infile, const juce::File outfile, const dow
     auto results = dowser::analysis::perform<fftOrder>(std::move(data), config);
 
     std::cout << "performing output... (" << outfile.getFullPathName() << ")" << std::endl;
-    dowser::output<dowser::output_format_t::supercollider> out;
+    dowser::output out;
 
-    out.perform(std::move(results).get(), outfile);
+    out.perform(dowser::output_format_t::supercollider, std::move(results).get(), outfile);
 
     std::cout << "done." << std::endl;
 }

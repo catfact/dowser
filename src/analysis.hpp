@@ -2,14 +2,15 @@
 // Created by emb on 10/19/2021.
 //
 
-#ifndef DOWSER_ANALYSIS_HPP
-#define DOWSER_ANALYSIS_HPP
+#pragma once
 
 #include <memory>
 
 #include "process.hpp"
+
 //#include "findpeaks/findpeaks.hpp"
 //#include "findpeaks/persistence.hpp"
+
 #include "peaks_watershed.hpp"
 
 #include "process_config.hpp"
@@ -25,6 +26,7 @@ namespace dowser {
             float pow;
             float persistence;
         };
+
         struct results {
 
             struct frame {
@@ -92,8 +94,8 @@ namespace dowser {
                         }
                     }
 
-                    resFrame.fluxPositive = fluxUp;
-                    resFrame.fluxNegative = fluxDown;
+                    resFrame.fluxPositive = (float)fluxUp;
+                    resFrame.fluxNegative = (float)fluxDown;
                 } else {
                     resFrame.fluxPositive = 0.f;
                     resFrame.fluxNegative = 0.f;
@@ -212,5 +214,3 @@ namespace dowser {
         }
     };
 }
-
-#endif // DOWSER_ANALYSIS_HPP

@@ -1,12 +1,12 @@
 #pragma once
 
-#include "output.hpp"
+#include "output_format.hpp"
 
 namespace dowser
 {
     struct ProcessConfig
     {
-        dowser::output_format_t outputFormat;
+        output_format_t outputFormat;
         float minHz, maxHz, minPowDb, minPersistence;
         int maxPeaksPerFrame;
     };
