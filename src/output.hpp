@@ -133,7 +133,7 @@ namespace dowser
                             log_field(fos, "hz", peak.hz);
                             log_field(fos, "mag", sqrt(peak.pow));
                             log_field(fos, "persist", peak.persistence);
-                            *fos << " }\n";
+                            *fos << " },\n";
                         }
                         *fos << "    ]\n";
                         *fos << "  },\n";
