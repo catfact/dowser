@@ -75,11 +75,11 @@ namespace dowser
                         *fos << "peaks: [\n";
                         for (auto peak: frame.magPeaks)
                         {
-                            *fos << "{ ";
+                            *fos << "( ";
                             log_field(fos, "hz", peak.hz);
                             log_field(fos, "mag", sqrt(peak.pow));
                             log_field(fos, "persist", peak.persistence);
-                            *fos << " }\n";
+                            *fos << " ),\n";
                         }
                         *fos << "    ]\n";
                         *fos << "  ),\n";
@@ -144,7 +144,7 @@ namespace dowser
         };
 
     private:
-        juce::FileOutputStream *fos;
+        juce::FileOutputStream *fos{nullptr};
 
     public:
         void perform(output_format_t fmt, const analysis::results *results, const juce::File &outfile)
@@ -173,6 +173,7 @@ namespace dowser
                     logger<output_format_t::lua>::log_all(fos, results);
                     break;
             }
+            delete fos;
         }
     };
 }
