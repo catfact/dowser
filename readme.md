@@ -8,10 +8,10 @@
 
 options include:
 
-`--minhz`, lower frequency bound of analysis, in hz
-`--maxhz`, upper frequency bound of analysis, in hz
-`--minmag`, peak magnitude threshold
-`--maxpeaks`, max number of peaks per frame
+- `--minhz`, lower frequency bound of analysis, in hz
+- `--maxhz`, upper frequency bound of analysis, in hz
+- `--minmag`, peak magnitude threshold
+- `--maxpeaks`, max number of peaks per frame
 
 the output is a supercollider script, defining a list of dictionaries. each dictionary contains data for a single spectral analysis frame.
 
