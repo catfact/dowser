@@ -135,9 +135,13 @@ namespace dowser {
 
             // interpolate true locations / magnitudes
             y.reserve(idx.size());
-            for (auto &pos: idx) {
+            int numPeaks = idx.size();
+
+            for (int i=0; i<numPeaks; ++i) {
+                int pos = idx[i];
                 auto peak = refinePeak<fftSize>(powBuf, static_cast<int>(pos), sr);
-                peak.persistence = watershedPeaks[pos - minBin].persistence;
+                /// FIXME: this
+                peak.persistence = watershedPeaks[i].persistence;
                 if (peak.pow > 0) {
                     y.push_back(peak);
                 }
